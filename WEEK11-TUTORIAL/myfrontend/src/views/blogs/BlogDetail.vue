@@ -1,0 +1,153 @@
+<template>
+    <div class="container is-widescreen">
+        <section class="section" v-if="error">
+            <div class="container is-widescreen">
+                <div class="notification is-danger">
+                    {{ error.code }}: {{ error.sqlMessage }}
+                </div>
+            </div>
+        </section>
+        <section class="hero" v-else>
+            <div class="hero-body">
+                <p class="title">
+                    {{ blogs.blog.title }}
+                </p>
+            </div>
+        </section>
+        <section class="section" id="app">
+            <div class="content">
+                <div class="card has-background-light">
+                    <div class="card-image pt-5">
+                        <div class="columns">
+                            <div class="column" v-for="img in blogs.images" :key="img.id">
+                                <figure class="image">
+                                    <img :src="'http://localhost:3000' + img.file_path" alt="Placeholder image">
+                                </figure>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="card-content">
+                        <div class="content">
+                            {{ blogs.blog.content }}
+                        </div>
+                        <div class="container">
+                            <p class="subtitle">Comments</p>
+                            <div class="box" v-for="comment in blogs.comments" :key="comment.id">
+                                <article class="media">
+                                    <div class="media-left">
+                                        <figure class="image is-64x64">
+                                            <img :src="'http://localhost:3000' + (comment.file_path)" alt="Image">
+                                        </figure>
+                                    </div>
+                                    <div class="media-content">
+                                        <div class="content">
+                                            <p>
+                                                {{ comment.comment }}
+                                            </p>
+                                            <p class="is-size-7">
+                                                {{ comment.comment_date }}
+                                            </p>
+                                        </div>
+                                        <nav class="level is-mobile">
+                                            <div class="level-left">
+                                                <a class="level-item" aria-label="like">
+                                                    <span class="icon is-small">
+                                                        <i class="fas fa-heart" aria-hidden="true"></i>
+                                                    </span>
+                                                </a>
+                                            </div>
+                                        </nav>
+                                    </div>
+                                </article>
+                            </div>
+                            <div class="columns box">
+                                <div class="column is-7">
+                                    <input class="input" type="text" name="comment" placeholder="Comment here..." value=""
+                                        v-model="comment">
+                                </div>
+                                <div class="column is-3">
+                                    <div id="file-js-example" class="file has-name">
+                                        <label class="file-label">
+                                            <input class="file-input" type="file" id="file" ref="file"
+                                                @change="handleFileUpload()">
+                                            <span class="file-cta">
+                                                <span class="file-icon">
+                                                    <i class="fas fa-upload"></i>
+                                                </span>
+                                                <span class="file-label">
+                                                    Choose a file…
+                                                </span>
+                                            </span>
+                                            <span class="file-name">
+                                                {{ filename }}
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="column is-2">
+                                    <input class="button is-primary" type="submit" value="Submit" @click="submit()" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="card-footer">
+                        <a class="card-footer-item" href="/">To Home Page</a>
+                    </footer>
+                </div>
+            </div>
+        </section>
+    </div>
+</template>
+
+<script>
+import axios from 'axios';
+export default {
+    data() {
+        return {
+            blogs: null,
+            error: null,
+            comment: null,
+            file: null,
+
+        }
+    },
+    created() {
+        axios.get(`http://localhost:3000/blogs/${this.$route.params.id}`)
+            .then((response) => {
+                this.blogs = response.data;
+                console.log(this.data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    },
+    methods: {
+        handleFileUpload() {
+            this.file = this.$refs.file.files[0];
+        },
+        submit() {
+            var formData = new FormData();
+            formData.append("myImage", this.file);
+            formData.append("comment", this.comment)
+            axios.post(`http://localhost:3000/${this.$route.params.id}/comments`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            }).then(response => {
+                // this.blogs = response.data.blogs
+                // location.reload()
+                console.log(response.data)
+                this.blogs = response.data
+            })
+                .catch(error => {
+                    console.log(error.message);
+                });
+
+        }
+    }
+}
+</script>
+
+<style>
+</style>
