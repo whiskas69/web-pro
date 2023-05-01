@@ -1,0 +1,11 @@
+<html lang="en">
+  <%- include('header') -%>
+  <body>
+    <h1><%= title %></h1>
+    <ul>
+      <% article.forEach(function(data, i, arr){ %>
+      <li><%= data.title %></li>
+      <% }); %>
+    </ul>
+  </body>
+</html>
