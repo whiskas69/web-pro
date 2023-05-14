@@ -5,10 +5,13 @@ router = express.Router();
 
 router.get("/", async function (req, res, next) {
   try {
+    //req.query.search รับมาจากช่อง search
     const search = req.query.search || ''
+    //a:blogs, b:image ,ON เชื่อม a.id = b.blog_id
     let sql = 'SELECT a.*, b.file_path FROM blogs AS a LEFT JOIN (SELECT * FROM images WHERE main=1) AS b ON a.id = b.blog_id;'
     let cond = []
-
+    
+    //ถ้ามีการพิม
     if (search.length > 0) {
       sql = 'SELECT a.*, b.file_path FROM blogs AS a LEFT JOIN (SELECT * FROM images WHERE main=1) AS b ON a.id = b.blog_id WHERE a.title LIKE ? OR a.content LIKE ?;'
       cond = [`%${search}%`, `%${search}%`]

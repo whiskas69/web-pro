@@ -16,9 +16,6 @@ router.get('/blogapi/:id/:name', (req, res) => {
   res.json(article.find(article => article.id === req.params.id))
 })
 
-
-
-
 router.get('/:id', (req, res, next) => {
   var data = {
     title:"All Blogs",
@@ -32,8 +29,5 @@ router.get('/:id', (req, res, next) => {
     res.send("<h1>ไม่พบบทความ</h1>")
   }
 })
-
-
-
 
 module.exports = router

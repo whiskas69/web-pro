@@ -1,8 +1,8 @@
 const express = require("express")
 const pool = require("../config")
 const Joi = require('joi')
-const bcrypt = require('bcrypt');
-const { generateToken } = require("../utils/token");
+const bcrypt = require('bcrypt');//gennerate passwordใหม่เป็นภาษาไรไม่รู้
+const { generateToken } = require("../utils/token");//เก็บไว้ใน localstorage เวลาล็อกอินจะจำรหัสผู้ใช้ไว้
 const { isLoggedIn } = require('../middlewares')// วางไว้หน้าที่ต้อง login ก่อน
 
 router = express.Router();

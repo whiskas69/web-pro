@@ -12,6 +12,7 @@ var storage = multer.diskStorage({
     callback(null, './static/uploads')
   },
   filename: function (req, file, callback) {
+    // set file name
     callback(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
   }
 })
@@ -61,6 +62,7 @@ router.get("/blogs/create", async function (req, res, next) {
   res.render('blogs/create')
 });
 
+//สร้าง new blog
 router.post("/blogs", upload.single('myImage'), async function (req, res, next) {
   // Your code here
   const file = req.file;
@@ -78,7 +80,7 @@ router.post("/blogs", upload.single('myImage'), async function (req, res, next) 
 
   const conn = await pool.getConnection()
   // Begin transaction
-  await conn.beginTransaction();//
+  await conn.beginTransaction();
 
   try {
     let results = await conn.query(
@@ -105,27 +107,30 @@ router.post("/blogs", upload.single('myImage'), async function (req, res, next) 
 });
 
 router.get("/blogs/:id", function (req, res, next) {
+  //select blog
   const promise1 = pool.query("SELECT * FROM blogs WHERE id=?", [
     req.params.id,
   ]);
+  //select comment in blog
   const promise2 = pool.query(
     "SELECT * FROM comments LEFT OUTER JOIN images ON (comments.id = images.comment_id) WHERE comments.blog_id=?", [
     req.params.id
   ]);
+  //select img WHERE blog_id=?
   const promise3 = pool.query("SELECT * FROM images WHERE blog_id=? and comment_id is null", [
     req.params.id,
   ]);
 
   Promise.all([promise1, promise2, promise3])
     .then((results) => {
-      const blogs = results[0];
-      const comments = results[1];
-      const images = results[2]
+      const blogs = results[0];//เอาข้อมูลที่ต้องการ
+      const comments = results[1];//เอาข้อมูลที่ต้องการ
+      const images = results[2]//เอาข้อมูลที่ต้องการ
       // console.log(results[0])
       // console.log(results[0][0])
       // console.log(results[2][0])
-      res.render("blogs/detail", {
-        blog: blogs[0][0],
+      res.render("blogs/detail", {  //render แสดงค่า
+        blog: blogs[0][0],//index หน้าสุดเอาอันแรก
         comments: comments[0],
         images: images[0],
         error: null,
