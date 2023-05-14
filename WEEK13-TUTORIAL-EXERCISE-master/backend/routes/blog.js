@@ -54,100 +54,90 @@ router.put("/blogs/addlike/:blogId", async function (req, res, next) {
   }
 });
 
-const checkDate = (value, helpers) => {
-  //ถ้า end_date มีค่า แล้ว start_date ไม่มี ให้แจ้ง err
-  if (value.end_date && !value.start_date){
-    throw new Joi.ValidationError("you want to fill in start_date")
-  }
-  return value
-}
-
 const createBlogSchma = Joi.object({
   title: Joi.string().required().min(10).max(25).pattern(/^[a-z A-Z]+$/),//เฉพาะตัวอักษรเท่านั้น
   content: Joi.string().required().min(50),
-  status: Joi.string().required().valid('status_private','status_public'),//valid เข้ามาได้เฉพาะค่าใน()เท่านั้น
+  status: Joi.string().required().valid('status_private', 'status_public'),//valid เข้ามาได้เฉพาะค่าใน()เท่านั้น
   reference: Joi.string().uri().optional(),//เช็คว่าเป็นลิ้งมั้ย
   pinned: Joi.string().required(),//boolean
   start_date: Joi.date().optional(),
-  end_date: Joi.date().optional().custom(checkDate).greater(Joi.ref('start_date')),
+  end_date: Joi.date().optional().min(joi.ref('start_date')),
 })
 
 router.post("/blogs", upload.array("myImage", 5), async function (req, res, next) {
 
   try {
-    await createBlogSchma.validateAsync(req.body,  { abortEarly: false })
+    await createBlogSchma.validateAsync(req.body, { abortEarly: false })
   } catch (err) {
     return res.status(400).json(err)
   }
   // res.send('ok')
+  const file = req.files;
+  let pathArray = [];
 
-    
-      const file = req.files;
-      let pathArray = [];
-
-      if (!file) {
-        return res.status(400).json({ message: "Please upload a file" });
-      }
-
-      const title = req.body.title;
-      const content = req.body.content;
-      let status = req.body.status;
-      let pinned = req.body.pinned;
-      const reference = req.body.reference;
-      const start_date = req.body.start_date;
-      const end_date = req.body.end_date;
-
-      if(pinned == "false"){
-        pinned = 0
-      }
-      else{
-        pinned = 1
-      }
-
-      if (status == "status_private"){
-        status = "01";
-      }
-      else{
-        status = "02"
-      }
-
-      const conn = await pool.getConnection();
-      // Begin transaction
-      await conn.beginTransaction();
-
-      try {
-        let results = await conn.query(
-          "INSERT INTO blogs(title, content, status, pinned, `like`,create_date, reference, start_date, end_date) VALUES(?, ?, ?, ?, 0,CURRENT_TIMESTAMP, ?, ?, ?);",
-          [title, content, status, pinned, reference, start_date, end_date]
-        );
-        // console.log(results)
-        const blogId = results[0].insertId;
-
-        req.files.forEach((file, index) => {
-          let path = [blogId, file.path.substring(6), index == 0 ? 1 : 0];
-          pathArray.push(path);
-        });
-
-        console.log(pathArray)
-        if (pathArray.length != 0){
-          await conn.query(
-            "INSERT INTO images(blog_id, file_path, main) VALUES ?;",
-            [pathArray]
-          );
-        }
-        
-
-        await conn.commit();
-        res.send("success!");
-      } catch (err) {
-        await conn.rollback();
-        return res.status(400).json(err);
-      } finally {
-        console.log("finally");
-        conn.release();
-      }
-    
+  if (!file) {
+    return res.status(400).json({ message: "Please upload a file" });
   }
+
+  const title = req.body.title;
+  const content = req.body.content;
+  let status = req.body.status;
+  let pinned = req.body.pinned;
+  const reference = req.body.reference;
+  const start_date = req.body.start_date;
+  const end_date = req.body.end_date;
+
+  if (pinned == "false") {
+    pinned = 0
+  }
+  else {
+    pinned = 1
+  }
+
+  if (status == "status_private") {
+    status = "01";
+  }
+  else {
+    status = "02"
+  }
+
+  const conn = await pool.getConnection();
+  // Begin transaction
+  await conn.beginTransaction();
+
+  try {
+    let results = await conn.query(
+      "INSERT INTO blogs(title, content, status, pinned, `like`,create_date, reference, start_date, end_date) VALUES(?, ?, ?, ?, 0,CURRENT_TIMESTAMP, ?, ?, ?);",
+      [title, content, status, pinned, reference, start_date, end_date]
+    );
+    // console.log(results)
+    const blogId = results[0].insertId;
+
+    req.files.forEach((file, index) => {
+      let path = [blogId, file.path.substring(6), index == 0 ? 1 : 0];
+      pathArray.push(path);
+    });
+
+    console.log(pathArray)
+    if (pathArray.length != 0) {
+      await conn.query(
+        "INSERT INTO images(blog_id, file_path, main) VALUES ?;",
+        [pathArray]
+      );
+    }
+
+
+    await conn.commit();
+    res.send("success!");
+  } catch (err) {
+    await conn.rollback();
+    return res.status(400).json(err);
+  } finally {
+    console.log("finally");
+    conn.release();
+  }
+
+}
 );
 
 // Blog detail
@@ -261,6 +251,7 @@ router.delete("/blogs/:blogId", async function (req, res, next) {
       "SELECT `file_path` FROM `images` WHERE `blog_id` = ?",
       [req.params.blogId]
     );
+    //????????????
     const appDir = path.dirname(require.main.filename); // Get app root directory
     console.log(appDir)
     images.forEach((e) => {

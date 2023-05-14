@@ -10,7 +10,7 @@ const commentOwner = async (req, res, next) => {
 
     const [rows, fields] = await pool.query('SELECT * FROM comments WHERE id=?', [req.params.commentId])
     
-    if (rows[0].comment_by_id !== req.user.id) {
+    if (rows[0].comment_by_id !== req.user.id) { //เช็คว่าตรงกับของตัวเองมั้ย
         return res.status(403).send('You do not have permission to perform this action')
     }
 

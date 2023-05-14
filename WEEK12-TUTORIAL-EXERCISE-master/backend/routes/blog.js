@@ -64,7 +64,7 @@ router.put("/blogs/addlike/:id", async function (req, res, next) {
     conn.release();
   }
 });
-
+//middlewares ทำตามลำดับ
 router.post("/blogs", isLoggedIn, upload.array("myImage", 5), async function (req, res, next) {
   const file = req.files;
   let pathArray = [];
@@ -109,7 +109,7 @@ router.post("/blogs", isLoggedIn, upload.array("myImage", 5), async function (re
     conn.release();
   }
 });
-
+//เรียกหน้า
 router.get("/blogs/:id", function (req, res, next) {
   // Query data from 3 tables
   const promise1 = pool.query("SELECT * FROM blogs WHERE id=?", [
@@ -241,6 +241,7 @@ router.delete("/blogs/:id", isLoggedIn, async function (req, res, next) {
     ]);
 
     if (rows2.affectedRows === 1) {
+      //ค่าแก้ไขข้อมูลเป็นค่าใหม่กี่รายการ สมมติอัปเดตค่า acds => err => affectedRows === 1: acdf => acdf affectedRows === 0
       await conn.commit();
       res.status(204).send();
     } else {

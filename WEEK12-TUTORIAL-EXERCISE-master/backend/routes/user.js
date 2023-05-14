@@ -103,7 +103,7 @@ router.post('/user/login', async (req, res, next) => {
             throw new Error('Incorrect username or password')
         }
 
-        // Check if token already existed
+        // Check if token already existed เคยเข้าสู้ระบบมั้ย
         const [tokens] = await conn.query(
             'SELECT * FROM tokens WHERE user_id=?',
             [user.id]
