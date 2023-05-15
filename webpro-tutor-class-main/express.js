@@ -18,7 +18,81 @@ const d_date = joi.object({
     end_date: joi.date().required().min(joi.ref('start_date'))
 })
 
+//title และ description เป็น required field
+//ในกรณี่ที่ไม่ส่ง due_date จะบันทึก due_date เป็นวันปัจจุบัน
+//เลข order จะเพิ่มขึ้นไปเรื่อยๆ โดยคำนวณจาก MAX(order) + 1
+//ข้อมูลที่แนบมากับ body ของ request จะมีลักษณะดังนี้
+//คำสั่งในการ Query Date ให้เป็น ( yyyy-mm-dd )
+const createTodoSchma = joi.object({
+    title: joi.string().required(),
+    description: joi.string().required(),
+
+})
+
+app.post("/todo", async function(req, res, next){
+
+})
+
+app.post('/todo', async (req, res, next) => {
+    console.log(req.body)
+    // เริ่มต้นทำงาน
+    const conn = await pool.getConnection();
+    await conn.beginTransaction();
+  
+  
+    const { title, description, due_date } = req.body
+    try {
+      // ตรวจสอบว่ามีการส่ง title มาหรือไม่
+      if (!title) {
+        return res.status(400).json({
+          message: 'ต้องกรอก title'
+        })
+      }
+      // ตรวจสอบว่ามีการส่ง description มาหรือไม่
+      if (!description) {
+        return res.status(400).json({
+          message: 'ต้องกรอก description'
+        })
+      }
+  
+      const max_data = await conn.query("SELECT MAX(`order`) AS max FROM todo")
+      const max_order = max_data[0][0].max + 1
+
+      // ตรวจสอบว่ามีการส่ง due_date มาหรือไม่
+    if (due_date) {//มีกรอกเวลา
+        const [rows, fields] = await conn.query("INSERT INTO todo (title, description, due_date, todo.order) VALUES (?, ?, ?, ?)", 
+        [title, description, due_date, max_order])
+        const detail = await conn.query(`SELECT *, DATE_FORMAT(due_date, '%Y-%m-%d') AS due_date  FROM todo WHERE id = ${rows.insertId}`)
+  
+        return res.status(201).json({
+          'message': `สร้าง ToDo '${title}' สำเร็จ`,
+          'todo': detail[0][0]
+        })
+      }
+  
+      else {//ไม่มีกรอกเวลา
+        const [rows, fields] = await conn.query("INSERT INTO todo (title, description, due_date, todo.order) VALUES (?, ?, DATE_FORMAT(TIMESTAMP, '%Y-%m-%d'), ?)", [title, description, max_order])
+        const detail = await conn.query(`SELECT *, DATE_FORMAT(due_date, '%Y-%m-%d') AS due_date  FROM todo WHERE id = ${rows.insertId}`)
+        return res.status(201).json({
+          message: `สร้าง ToDo '${title}' สำเร็จ`,
+          todo: detail[0][0]
+        })
+      }
+    }
+    catch (err) {
+      console.log(err)
+      next(err)
+      conn.rollback();
+    }
+    finally {
+      await conn.commit();
+      conn.release();
+    }
+  })
+  
+
 //ไม่ต้องเอา ?start_date=2022-05-15&end_date=2023-01-13 มาใส่ก็ได้
+//จะเป็นการค้นหาข้อมูล ToDo ทั้งหมดซึ่งมี due_date อยู่ตั้งแต่วันที่ 2023-01-01 ถึงวันที่ 2023-05-15
 app.get("/todo", async (req, res) => {
 
     //  ไว้เช็คแบบ try cath ข้างล่าง
@@ -50,6 +124,7 @@ app.get("/todo", async (req, res) => {
 
 })
 
+//ลบข้อมูลในตาราง todo
 app.delete("/todo/:id", async (req, res) => {
     const id = req.params.id
     console.log(id)
