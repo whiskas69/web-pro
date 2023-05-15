@@ -30,7 +30,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await db.query('DROP TABLE IF EXISTS todo')
+    // await db.query('DROP TABLE IF EXISTS todo')
     await db.end()
     await server.close()
 });
